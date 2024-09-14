@@ -8,8 +8,6 @@ name: Symfony
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 permissions:
   contents: read
@@ -26,24 +24,25 @@ jobs:
         php-version: '8.3'
     - uses: actions/checkout@v4
 
-    - name: Install Apache
+    - name: Update package lists
+      run: sudo apt-get update
+
+    - name: Install Apache2
+      run: sudo apt-get install -y apache2
+
+    - name: Enable Apache2 modules
       run: |
-        pwd
-        sudo apt update
-        sudo apt install apache2
-        echo "GETTING ADMIN PERMS SETUP"
-        sudo adduser $(whoami) www-data
-        sudo adduser $(whoami) root
-        sudo adduser root www-data
-        sudo chown -R www-data:www-data /etc/apache2/sites-available/
-        sudo chmod -R 777 /etc/apache2/sites-available/
-        sudo chown -R www-data:www-data /var/www/html/
-        sudo chmod -R 777 /var/www/html/
-        ls -l /etc/apache2/sites-available/000-default.conf
-        ls -l /etc/apache2/sites-available
-        ls -l /etc/apache2/
-        cat /etc/apache2/sites-available/000-default.conf
-        curl -I localhost
+        sudo a2enmod rewrite
+        sudo a2enmod ssl
+
+    - name: Enable default Apache2 site
+      run: sudo a2ensite 000-default
+
+    - name: Restart Apache2
+      run: sudo systemctl restart apache2
+
+    - name: Check Apache2 status
+      run: sudo systemctl status apache2
 #
 #    - name: Cache Composer packages
 #      id: composer-cache
